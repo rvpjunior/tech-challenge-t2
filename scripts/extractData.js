@@ -1,24 +1,34 @@
 import fetch from "node-fetch";
 import parquet from "parquetjs-lite";
 
+const toFloat = (value) => {
+  return value !== "" && value !== undefined
+    ? parseFloat(value.replace(",", "."))
+    : undefined;
+};
+
+const toInt = (value) => {
+  return value !== "" && value !== undefined ? parseInt(value) : undefined;
+};
+
 const appendRecordsToParquetFile = async (parquetWriter, records) => {
   for (const record of records) {
     await parquetWriter.appendRow({
-      date: record[0],
-      trackerSymbol: record[1],
+      rptDt: record[0],
+      tckrSymb: record[1],
       isin: record[2],
-      segment: record[3],
-      minPrice: record[4],
-      maxPrice: record[5],
-      averagePrice: record[6],
-      finalPrice: record[7],
-      oscillation: record[8],
-      priceAdjustment: record[9],
-      taxAdjustment: record[10],
-      referencePrice: record[11],
-      tradeCount: record[12],
-      contractTradedCount: record[13],
-      financialVolume: record[14],
+      sgmtNm: record[3],
+      minPric: toFloat(record[4]),
+      maxPric: toFloat(record[5]),
+      tradAvrgPric: toFloat(record[6]),
+      lastPric: toFloat(record[7]),
+      oscnPctg: toFloat(record[8]),
+      adjstdQt: toFloat(record[9]),
+      adjstdQtTax: toFloat(record[10]),
+      refPric: toFloat(record[11]),
+      tradQty: toInt(record[12]),
+      finInstrmQty: toInt(record[13]),
+      ntlFinVol: toFloat(record[14]),
     });
   }
 };
@@ -59,27 +69,27 @@ const fetchRecords = async (date) => {
 
   const records = dataCSV.split("\n").map((line) => line.split(";"));
 
-  return records.slice(2);
+  return records.slice(2).filter((record) => record.length > 1);
 };
 
 const fetchAndWriteData = async (date) => {
   try {
     const parquetSchema = new parquet.ParquetSchema({
-      date: { type: "UTF8", optional: true },
-      trackerSymbol: { type: "UTF8", optional: true },
-      isin: { type: "UTF8", optional: true },
-      segment: { type: "UTF8", optional: true },
-      minPrice: { type: "UTF8", optional: true },
-      maxPrice: { type: "UTF8", optional: true },
-      averagePrice: { type: "UTF8", optional: true },
-      ByteLengthQueuingStrategyPrice: { type: "UTF8", optional: true },
-      oscillation: { type: "UTF8", optional: true },
-      priceAdjustment: { type: "UTF8", optional: true },
-      taxAdjustment: { type: "UTF8", optional: true },
-      referencePrice: { type: "UTF8", optional: true },
-      tradeCount: { type: "UTF8", optional: true },
-      contractTradedCount: { type: "UTF8", optional: true },
-      financialVolume: { type: "UTF8", optional: true },
+      rptDt: { type: "UTF8" },
+      tckrSymb: { type: "UTF8" },
+      isin: { type: "UTF8" },
+      sgmtNm: { type: "UTF8" },
+      minPric: { type: "FLOAT", optional: true },
+      maxPric: { type: "FLOAT", optional: true },
+      tradAvrgPric: { type: "FLOAT", optional: true },
+      lastPric: { type: "FLOAT", optional: true },
+      oscnPctg: { type: "FLOAT", optional: true },
+      adjstdQt: { type: "FLOAT", optional: true },
+      adjstdQtTax: { type: "FLOAT", optional: true },
+      refPric: { type: "FLOAT", optional: true },
+      tradQty: { type: "INT64", optional: true },
+      finInstrmQty: { type: "INT64", optional: true },
+      ntlFinVol: { type: "FLOAT", optional: true },
     });
 
     const parquetFilePath = `outputs/output_${date}.parquet`;
@@ -93,7 +103,7 @@ const fetchAndWriteData = async (date) => {
 
     await appendRecordsToParquetFile(parquetWriter, records);
     await parquetWriter.close();
-    console.info("Data fetched and written to output.parquet");
+    console.info(`Data fetched and written to ${parquetFilePath}`);
   } catch (error) {
     console.log(error);
     console.error("Error fetching data from B3");
