@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "extract-data": "node scripts/extractData.js"
+    "extract-data": "node scripts/extractData.js",
+    "upload-data": "node scripts/uploadParquetToS3.js"
   },
   "author": "",
   "license": "ISC",

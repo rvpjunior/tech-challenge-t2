@@ -105,8 +105,8 @@ const fetchAndWriteData = async (date) => {
     await parquetWriter.close();
     console.info(`Data fetched and written to ${parquetFilePath}`);
   } catch (error) {
-    console.log(error);
     console.error("Error fetching data from B3");
+    console.log(error);
     process.exit(1);
   }
 };
